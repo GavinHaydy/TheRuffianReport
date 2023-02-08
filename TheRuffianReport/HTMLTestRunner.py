@@ -78,8 +78,6 @@ import hmac
 import random
 import traceback
 from urllib import parse
-import re
-
 import requests
 
 """
@@ -772,14 +770,13 @@ class HTMLTestRunner(Template_mixin):
         tmpl = has_output and self.REPORT_TEST_WITH_OUTPUT_TMPL or self.REPORT_TEST_NO_OUTPUT_TMPL
 
         '''测试报告展示失败截图'''
-        screenshot = str(o).find('失败截图已保存到:')   # 获取msg，如果有  结果为0 方便下方切片
+        screenshot = str(o).find('失败截图已保存到:')  # 获取msg，如果有  结果为0 方便下方切片
         if (o and e and screenshot != -1):  # 判断是否断言失败  断言失败则继续
             hidde_status = ''
             image_url = '../images/' + str(o)[screenshot + 10:-1]
         else:
-            hidde_status = '''hidden="hidden"'''    # 隐藏标签
+            hidde_status = '''hidden="hidden"'''  # 隐藏标签
             image_url = ''
-
 
         script = self.REPORT_TEST_OUTPUT_TMPL % dict(
             id=tid,
@@ -858,7 +855,36 @@ class DingTalk:
         response = requests.post(url=self.url, json=self.data, params=params)
         return response
 
-def failure_monitor(self,img_path):
+
+class Lark:
+    """https://open.feishu.cn/document/ukTMukTMukTM/ucTM5YjL3ETO24yNxkjN"""
+
+    def __init__(self, url, data, secret=None):
+        self.url = url
+        self.data = data
+        self.secret = secret
+
+    def gen_sign(self):
+        timestamp = str(round(time.time()))
+        # 拼接timestamp和secret
+        string_to_sign = '{}\n{}'.format(timestamp, self.secret)
+        hmac_code = hmac.new(string_to_sign.encode("utf-8"), digestmod=hashlib.sha256).digest()
+
+        # 对结果进行base64处理
+        sign = base64.b64encode(hmac_code).decode('utf-8')
+
+        return {"sign": sign, "timestamp": timestamp}
+
+    def send_info(self):
+        if self.secret:
+            data = self.gen_sign()
+            data.update(self.data)
+            return requests.post(self.url, json=data).json()
+        else:
+            return requests.post(self.url, json=self.data).json()
+
+
+def failure_monitor(self, img_path):
     test_case = self  # 将self赋值给test_case，以便下方的AssertionErrorPlus内部类可调用外部类的方法
 
     class AssertionErrorPlus(AssertionError):
@@ -876,6 +902,7 @@ def failure_monitor(self,img_path):
             super(AssertionErrorPlus, self).__init__(msg)
 
     return AssertionErrorPlus  # 返回AssertionErrorPlus类
+
 
 main = TestProgram
 ##############################################################################
