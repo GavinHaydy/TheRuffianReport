@@ -5,7 +5,7 @@ with open("README.md", 'rb') as f:
     long_description = f.read()
 
 setup(name='TheRuffianReport',  # 你包的名称
-      version='1.0.0',  # 版本号
+      version='1.0.1',  # 版本号
       description='test',  # 描述
       long_description=long_description,  # 长描述
       long_description_content_type='text/markdown',
